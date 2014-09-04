@@ -115,21 +115,13 @@ class SpatialPlotDialog(QDialog, Ui_SpatialPlot):
         self.axes.clear()
         self.axes.set_title(self.tr(str(self.iface.mapCanvas().currentLayer().name())))
         
-        #args = []
         lines = []
         for yAxis in self.getListWidgetValues(self.listWidgetYAxis):
             line = self.axes.plot(xAxisData, featureData[yAxis], label=str(yAxis))
             lines.append(line)   
-            #args.append(xAxisData)
-            #args.append(featureData[yAxis])
         
-        #self.axes.legend(handles=lines)
         self.axes.legend()
-        
-        #self.axes.plot(*args)
         self.axes.set_xlabel(str(self.comboBoxXAxis.currentText()))
-        
-        
         self.figure.autofmt_xdate()
         self.canvas.draw()
         

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui_spatialplot.ui'
 #
-# Created: Wed Sep 03 09:03:38 2014
+# Created: Wed Sep 03 11:02:39 2014
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -73,11 +73,11 @@ class Ui_SpatialPlot(object):
         self.label_2.setObjectName(_fromUtf8("label_2"))
         self.gridLayout.addWidget(self.label_2, 3, 0, 1, 1)
         self.listWidgetAttributes = QtGui.QListWidget(SpatialPlot)
-        self.listWidgetAttributes.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
+        self.listWidgetAttributes.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self.listWidgetAttributes.setObjectName(_fromUtf8("listWidgetAttributes"))
         self.gridLayout.addWidget(self.listWidgetAttributes, 1, 0, 2, 2)
         self.listWidgetYAxis = QtGui.QListWidget(SpatialPlot)
-        self.listWidgetYAxis.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
+        self.listWidgetYAxis.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self.listWidgetYAxis.setObjectName(_fromUtf8("listWidgetYAxis"))
         self.gridLayout.addWidget(self.listWidgetYAxis, 1, 3, 2, 1)
         self.pushButtonAdd = QtGui.QPushButton(SpatialPlot)
