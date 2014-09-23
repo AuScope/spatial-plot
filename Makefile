@@ -33,7 +33,7 @@ TRANSLATIONS =
 
 PLUGINNAME = spatialplot
 
-PY_FILES = spatialplot.py spatialplotdialog.py __init__.py
+PY_FILES = spatialplot.py spatialplotdialog.py __init__.py statist_utils.py
 
 EXTRAS = icon.png metadata.txt
 
@@ -65,7 +65,7 @@ deploy: compile doc transcompile
 	cp -vf $(UI_FILES) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	cp -vf $(RESOURCE_FILES) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
 	cp -vf $(EXTRAS) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
-	cp -vfr i18n $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)
+	cp -vfr i18n $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME) || true
 	cp -vfr $(HELP) $(HOME)/$(QGISDIR)/python/plugins/$(PLUGINNAME)/help
 
 # The dclean target removes compiled python files from plugin directory
