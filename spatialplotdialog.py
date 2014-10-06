@@ -33,8 +33,8 @@ import statist_utils as utils
 import numpy as np
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
-#from interactivetoolbar import InteractiveToolbar as NavigationToolbar
+#from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
+from interactivetoolbar import InteractiveToolbar as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib import rcParams
 
@@ -68,10 +68,20 @@ class SpatialPlotDialog(QDialog, Ui_SpatialPlot):
         self.mpltoolbar = NavigationToolbar(self.canvas, self)
         lstActions = self.mpltoolbar.actions()
         self.mpltoolbar.removeAction(lstActions[7])
+        
+        self.mpltoolbar.select_plot.connect(self.onPlotSelect)
+        
         self.verticalLayoutPlot.addWidget(self.canvas)
         self.verticalLayoutPlot.addWidget(self.mpltoolbar)
         self.canvas.mpl_connect('motion_notify_event', self.onMouseMove)
         self.axesPlotted=False
+        
+    def onPlotSelect(self, x0, x1):
+        xAxis = self.comboBoxXAxis.currentText()
+        r = QgsFeatureRequest()
+        r.setFilterExpression('{0} >= {1} AND {0} <= {2}'.format(xAxis, x0, x1))
+        features = self.iface.mapCanvas().currentLayer().getFeatures(r)
+        self.iface.mapCanvas().currentLayer().setSelectedFeatures([f.id() for f in features])
         
     def closeEvent(self, evnt):
         if self.highlight is not None:
