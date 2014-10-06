@@ -25,7 +25,7 @@ QGISDIR=.qgis2
 # Makefile for a PyQGIS plugin
 
 # translation
-SOURCES = spatialplot.py ui_spatialplot.py __init__.py spatialplotdialog.py
+SOURCES = spatialplot.py ui_spatialplot.py __init__.py spatialplotdialog.py statist_utils.py interactivetoolbar.py
 #TRANSLATIONS = i18n/spatialplot_en.ts
 TRANSLATIONS =
 
@@ -33,9 +33,9 @@ TRANSLATIONS =
 
 PLUGINNAME = spatialplot
 
-PY_FILES = spatialplot.py spatialplotdialog.py __init__.py statist_utils.py
+PY_FILES = spatialplot.py spatialplotdialog.py __init__.py statist_utils.py interactivetoolbar.py
 
-EXTRAS = icon.png metadata.txt
+EXTRAS = icon.png action.png metadata.txt
 
 UI_FILES = ui_spatialplot.py
 
