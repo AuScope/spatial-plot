@@ -84,10 +84,16 @@ class SpatialPlotDialog(QDialog, Ui_SpatialPlot):
         self.iface.mapCanvas().currentLayer().setSelectedFeatures([f.id() for f in features])
         
     def closeEvent(self, evnt):
+        self.removeHighlight()
+    
+    """ Removes the current feature highlight. No effect if the marker DNE """
+    def removeHighlight(self):
         if self.highlight is not None:
             self.iface.mapCanvas().scene().removeItem(self.highlight)
-        
-    def onMouseMove(self, event):
+        self.highlight = None
+    
+    def onMouseMove(self, event):    
+        self.removeHighlight()
         if not self.axesPlotted or not event.inaxes:
             return
         
@@ -98,9 +104,6 @@ class SpatialPlotDialog(QDialog, Ui_SpatialPlot):
         closestIndex = np.searchsorted(xAxisData, event.xdata, side='left')
         if closestIndex == 0 or closestIndex >= len(xAxisData):
             return
-        
-        if self.highlight is not None:
-            self.iface.mapCanvas().scene().removeItem(self.highlight)
         
         x = self.featureData['GEOM_X'][closestIndex]
         y = self.featureData['GEOM_Y'][closestIndex]
