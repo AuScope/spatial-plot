@@ -70,13 +70,15 @@ class SpatialPlot:
     
         # Create the dialog (after translation) and keep reference
         self.dlg = SpatialPlotDialog(self.iface)
-    
+        
+        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dlg)
+        
         # show the dialog
-        self.dlg.show()
+        #self.dlg.show()
         # Run the dialog event loop
-        result = self.dlg.exec_()
+        #result = self.dlg.exec_()
         # See if OK was pressed
-        if result == 1:
+        #if result == 1:
             # do something useful (delete the line containing pass and
             # substitute with your code)
-            pass
+        #    pass

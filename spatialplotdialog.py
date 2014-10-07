@@ -38,19 +38,20 @@ from interactivetoolbar import InteractiveToolbar as NavigationToolbar
 from matplotlib.figure import Figure
 from matplotlib import rcParams
 
-class SpatialPlotDialog(QDialog, Ui_SpatialPlot):
+class SpatialPlotDialog(QDockWidget, Ui_SpatialPlot):
 
-    CENTROID_X_FIELD = 'GEOM_X'
-    CENTROID_Y_FIELD = 'GEOM_Y'
+    CENTROID_X_FIELD = 'SP_GEOM_X'
+    CENTROID_Y_FIELD = 'SP_GEOM_Y'
+    FEATURE_ID_FIELD = 'SP_ID_FIELD'
 
     xAxis = None # The name (string) of the xAxis at the time of "plotting"
     axesPlotted=False # True if the user has hit the "Plot" button
     iface = None 
     highlight = None # A QgsVertexMarker (or None) representing a highlight placed on the map
     currentLayer = None # The QgsVectorLayer that will be used to generate plots
-        
+    
     def __init__(self, iface):
-        QDialog.__init__(self)
+        QDockWidget.__init__(self)
         # Set up the user interface from Designer.
         # After setupUI you can access any designer object by doing
         # self.<objectname>, and you can use autoconnect slots - see
@@ -60,15 +61,17 @@ class SpatialPlotDialog(QDialog, Ui_SpatialPlot):
         
         self.iface = iface
         
+        # Populate controls
         self.currentLayer = self.iface.mapCanvas().currentLayer()
         fieldNames = utils.getFieldNames(self.currentLayer, [QVariant.Int, QVariant.Double])
-        
         self.pushButtonAdd.clicked.connect(self.addSelectedAttribute)
         self.pushButtonRemove.clicked.connect(self.removeSelectedAttribute)
-        self.pushButtonPlot.clicked.connect(self.plot)
-        
         self.listWidgetAttributes.addItems(fieldNames)
         self.comboBoxXAxis.addItems(fieldNames)
+
+        # Register for events
+        self.currentLayer.selectionChanged.connect(self.onSelectionChanged)
+        self.comboBoxXAxis.currentIndexChanged.connect(self.onXAxisChanged)
 
         #Plot lib
         self.figure = Figure()
@@ -81,7 +84,13 @@ class SpatialPlotDialog(QDialog, Ui_SpatialPlot):
         self.verticalLayoutPlot.addWidget(self.canvas)
         self.verticalLayoutPlot.addWidget(self.mpltoolbar)
         self.canvas.mpl_connect('motion_notify_event', self.onMouseMove)
-        
+    
+    def onXAxisChanged(self, newXAxis):
+        self.plot()
+    
+    def onSelectionChanged(self, selected, deselected, clearAndSelect):
+        self.plot()
+    
     """ Raised whenever user drags and selects a portion of the map """
     def onPlotSelect(self, x0, x1):
         r = QgsFeatureRequest()
@@ -92,6 +101,8 @@ class SpatialPlotDialog(QDialog, Ui_SpatialPlot):
     """ Raised when the window is closing - use it to clean up """
     def closeEvent(self, evnt):
         self.removeHighlight()
+        self.currentLayer.selectionChanged.disconnect(self.onSelectionChanged)
+        self.comboBoxXAxis.currentIndexChanged.disconnect(self.onXAxisChanged)
     
     """ Removes the current feature highlight. No effect if the marker DNE """
     def removeHighlight(self):
@@ -127,6 +138,7 @@ class SpatialPlotDialog(QDialog, Ui_SpatialPlot):
             rowToRemove = self.listWidgetAttributes.row(item)
             item = self.listWidgetAttributes.takeItem(rowToRemove)
             self.listWidgetYAxis.addItem(item)
+        self.plot()
     
     def removeSelectedAttribute(self):
         items = self.listWidgetYAxis.selectedItems()
@@ -134,6 +146,7 @@ class SpatialPlotDialog(QDialog, Ui_SpatialPlot):
             rowToRemove = self.listWidgetYAxis.row(item)
             item = self.listWidgetYAxis.takeItem(rowToRemove)
             self.listWidgetAttributes.addItem(item)
+        self.plot()
 
     def getListWidgetValues(self, lw):
         values = []
@@ -141,9 +154,28 @@ class SpatialPlotDialog(QDialog, Ui_SpatialPlot):
             values.append(lw.item(i).text())
         return values
         
+    def clearPlot(self):
+        self.axesPlotted = False
+        self.xAxis = None
+        self.featureData = None
+        self.axes.clear()
+        self.canvas.draw()
+    
     def plot(self):
-        self.xAxis = self.comboBoxXAxis.currentText()
+        if (self.comboBoxXAxis.currentText() is None or self.comboBoxXAxis.currentText() == ""):
+            self.clearPlot()
+            return
+        
+        if (self.listWidgetYAxis.count() == 0):
+            self.clearPlot()
+            return
+        
         features = self.currentLayer.selectedFeatures()
+        if (len(features) == 0):
+            self.clearPlot()
+            return
+        
+        self.xAxis = self.comboBoxXAxis.currentText()
         attributes = self.getListWidgetValues(self.listWidgetYAxis)
         attributes.append(self.xAxis)
         attributes = list(set(attributes)) # Get rid of duplicate values
