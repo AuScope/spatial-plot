@@ -39,6 +39,16 @@ from matplotlib.figure import Figure
 from matplotlib import rcParams
 
 class SpatialPlotDialog(QDialog, Ui_SpatialPlot):
+
+    CENTROID_X_FIELD = 'GEOM_X'
+    CENTROID_Y_FIELD = 'GEOM_Y'
+
+    xAxis = None # The name (string) of the xAxis at the time of "plotting"
+    axesPlotted=False # True if the user has hit the "Plot" button
+    iface = None 
+    highlight = None # A QgsVertexMarker (or None) representing a highlight placed on the map
+    currentLayer = None # The QgsVectorLayer that will be used to generate plots
+        
     def __init__(self, iface):
         QDialog.__init__(self)
         # Set up the user interface from Designer.
@@ -49,10 +59,9 @@ class SpatialPlotDialog(QDialog, Ui_SpatialPlot):
         self.setupUi(self)
         
         self.iface = iface
-        self.highlight = None
         
-        layer = self.iface.mapCanvas().currentLayer()
-        fieldNames = utils.getFieldNames(layer, [QVariant.Int, QVariant.Double])
+        self.currentLayer = self.iface.mapCanvas().currentLayer()
+        fieldNames = utils.getFieldNames(self.currentLayer, [QVariant.Int, QVariant.Double])
         
         self.pushButtonAdd.clicked.connect(self.addSelectedAttribute)
         self.pushButtonRemove.clicked.connect(self.removeSelectedAttribute)
@@ -60,7 +69,7 @@ class SpatialPlotDialog(QDialog, Ui_SpatialPlot):
         
         self.listWidgetAttributes.addItems(fieldNames)
         self.comboBoxXAxis.addItems(fieldNames)
-        
+
         #Plot lib
         self.figure = Figure()
         self.axes = self.figure.add_subplot(111)
@@ -68,21 +77,19 @@ class SpatialPlotDialog(QDialog, Ui_SpatialPlot):
         self.mpltoolbar = NavigationToolbar(self.canvas, self)
         lstActions = self.mpltoolbar.actions()
         self.mpltoolbar.removeAction(lstActions[7])
-        
         self.mpltoolbar.select_plot.connect(self.onPlotSelect)
-        
         self.verticalLayoutPlot.addWidget(self.canvas)
         self.verticalLayoutPlot.addWidget(self.mpltoolbar)
         self.canvas.mpl_connect('motion_notify_event', self.onMouseMove)
-        self.axesPlotted=False
         
+    """ Raised whenever user drags and selects a portion of the map """
     def onPlotSelect(self, x0, x1):
-        xAxis = self.comboBoxXAxis.currentText()
         r = QgsFeatureRequest()
-        r.setFilterExpression('{0} >= {1} AND {0} <= {2}'.format(xAxis, x0, x1))
-        features = self.iface.mapCanvas().currentLayer().getFeatures(r)
-        self.iface.mapCanvas().currentLayer().setSelectedFeatures([f.id() for f in features])
-        
+        r.setFilterExpression('{0} >= {1} AND {0} <= {2}'.format(self.xAxis, x0, x1))
+        features = self.currentLayer.getFeatures(r)
+        self.currentLayer.setSelectedFeatures([f.id() for f in features])
+    
+    """ Raised when the window is closing - use it to clean up """
     def closeEvent(self, evnt):
         self.removeHighlight()
     
@@ -92,21 +99,21 @@ class SpatialPlotDialog(QDialog, Ui_SpatialPlot):
             self.iface.mapCanvas().scene().removeItem(self.highlight)
         self.highlight = None
     
+    """ Raised whenever the mouse moves over the plot """
     def onMouseMove(self, event):    
         self.removeHighlight()
         if not self.axesPlotted or not event.inaxes:
             return
         
         #Lookup xdata closest to mouseover location
-        xAxis = self.comboBoxXAxis.currentText()
-        xAxisData = self.featureData[xAxis]
+        xAxisData = self.featureData[self.xAxis]
         x=event.xdata        
         closestIndex = np.searchsorted(xAxisData, event.xdata, side='left')
         if closestIndex == 0 or closestIndex >= len(xAxisData):
             return
         
-        x = self.featureData['GEOM_X'][closestIndex]
-        y = self.featureData['GEOM_Y'][closestIndex]
+        x = self.featureData[self.CENTROID_X_FIELD][closestIndex]
+        y = self.featureData[self.CENTROID_Y_FIELD][closestIndex]
         self.highlight = QgsVertexMarker(self.iface.mapCanvas())
         self.highlight.setCenter(QgsPoint(x,y))
         self.highlight.setColor(QColor(255,0,0))
@@ -135,15 +142,16 @@ class SpatialPlotDialog(QDialog, Ui_SpatialPlot):
         return values
         
     def plot(self):
-        features = self.iface.mapCanvas().currentLayer().selectedFeatures()
+        self.xAxis = self.comboBoxXAxis.currentText()
+        features = self.currentLayer.selectedFeatures()
         attributes = self.getListWidgetValues(self.listWidgetYAxis)
-        attributes.append(self.comboBoxXAxis.currentText())
+        attributes.append(self.xAxis)
         attributes = list(set(attributes)) # Get rid of duplicate values
         
         #Turn features into a numpy record array keyed by attributes
         dataTypes = [(str(x), np.float) for x in attributes]
-        dataTypes.append(('GEOM_X', np.float))
-        dataTypes.append(('GEOM_Y', np.float))
+        dataTypes.append((self.CENTROID_X_FIELD, np.float)) # We also cache the x/y for the mouseover highlight location
+        dataTypes.append((self.CENTROID_Y_FIELD, np.float)) # We also cache the x/y for the mouseover highlight location
         self.featureData = np.recarray(len(features), dtype=np.dtype(dataTypes))
         idx = 0
         for feature in features:
@@ -158,15 +166,14 @@ class SpatialPlotDialog(QDialog, Ui_SpatialPlot):
             self.featureData[idx] = tuple(attributeValues)
             idx = idx + 1
     
-        # Sort by sort field
-        sortAttribute = self.comboBoxXAxis.currentText()
-        self.featureData.sort(order=[str(sortAttribute)])
+        # Sort by x Axis
+        self.featureData.sort(order=[str(self.xAxis)])
         
         
         # Make the plot
-        xAxisData = self.featureData[self.comboBoxXAxis.currentText()]
+        xAxisData = self.featureData[self.xAxis]
         self.axes.clear()
-        self.axes.set_title(self.tr(str(self.iface.mapCanvas().currentLayer().name())))
+        self.axes.set_title(self.tr(str(self.currentLayer.name())))
         
         lines = []
         for yAxis in self.getListWidgetValues(self.listWidgetYAxis):
@@ -174,7 +181,7 @@ class SpatialPlotDialog(QDialog, Ui_SpatialPlot):
             lines.append(line)   
         
         self.axes.legend()
-        self.axes.set_xlabel(str(self.comboBoxXAxis.currentText()))
+        self.axes.set_xlabel(str(self.xAxis))
         self.figure.autofmt_xdate()
         self.canvas.draw()
         self.axesPlotted=True
