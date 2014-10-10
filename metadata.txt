@@ -11,7 +11,7 @@
 [general]
 name=Spatial Plot
 qgisMinimumVersion=2.0
-description=A plugin for plotting one or more attributes from a set of vector features
+description=A plugin for plotting one or more numerical attributes from a set of vector features
 version=0.1
 author=Josh Vote (CSIRO)
 email=Josh.Vote@csiro.au
@@ -24,7 +24,7 @@ email=Josh.Vote@csiro.au
 # changelog=
 
 # tags are comma separated with spaces allowed
-tags=plot,spatial,graph,matplotlib,csiro
+tags=plot,spatial,graph,matplotlib,csiro,vector
 
 homepage=https://github.com/AuScope/spatial-plot
 tracker=https://github.com/AuScope/spatial-plot
@@ -35,4 +35,6 @@ experimental=False
 
 # deprecated flag (applies to the whole plugin, not just a single version
 deprecated=False
+
+category=Vector
 
