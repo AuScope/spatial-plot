@@ -23,6 +23,8 @@
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from qgis.core import *
+from qgis.gui import QgsMessageBar
+
 # Initialize Qt resources from file resources.py
 import resources_rc
 # Import the code for the dialog
@@ -58,19 +60,24 @@ class SpatialPlot:
 
         # Add toolbar button and menu item
         self.iface.addToolBarIcon(self.action)
-        self.iface.addPluginToMenu(u"&Spatial Plot", self.action)
+        self.iface.addPluginToVectorMenu(u"&Spatial Plot", self.action)
 
     def unload(self):
         # Remove the plugin menu item and icon
-        self.iface.removePluginMenu(u"&Spatial Plot", self.action)
+        self.iface.removePluginVectorMenu(u"&Spatial Plot", self.action)
         self.iface.removeToolBarIcon(self.action)
 
     # run method that performs all the real work
     def run(self):
     
+        if (self.iface.mapCanvas().currentLayer() is None or
+            not isinstance(self.iface.mapCanvas().currentLayer(), QgsVectorLayer)):
+            self.iface.messageBar().pushMessage("Error", "You'll need to select a Vector layer first...", level=QgsMessageBar.CRITICAL)
+            return
+            
+    
         # Create the dialog (after translation) and keep reference
         self.dlg = SpatialPlotDialog(self.iface)
-        
         self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dlg)
         
         # show the dialog
