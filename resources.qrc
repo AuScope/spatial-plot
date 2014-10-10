@@ -1,5 +1,6 @@
 <RCC>
-    <qresource prefix="/plugins/spatialplot" >
+    <qresource prefix="/plugins/spatialplot">
         <file>icon.png</file>
+        <file>action.png</file>
     </qresource>
 </RCC>

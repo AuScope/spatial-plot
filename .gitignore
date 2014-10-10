@@ -53,3 +53,5 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
+resources_rc.py
+ui_spatialplot.py

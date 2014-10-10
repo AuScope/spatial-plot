@@ -38,12 +38,8 @@ class InteractiveToolbar(NavigationToolbar2QTAgg):
         
         self._select_mode_events = []
     
-    """ Creates a QIcon based on a filename lcoal to this source file """
-    def _local_icon(self, name):
-        return QIcon(os.path.join(os.path.dirname(os.path.abspath(__file__)), name))
-    
     def _init_toolbar(self):
-        selectAction = self.addAction(self._local_icon('action.png'), 'Select Features', self.select_mode)
+        selectAction = self.addAction(QIcon(":/plugins/spatialplot/action.png"), 'Select Features', self.select_mode)
         selectAction.setToolTip('Click and drag the plot to select features in the QGIS interface.')
         selectAction.setCheckable(True)
         self._actions['select'] = selectAction
